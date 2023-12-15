@@ -1,6 +1,6 @@
+from datetime import datetime, timedelta  # Import timedelta here
 import requests
 import telebot
-from datetime import datetime
 from time import sleep
 from requests.exceptions import ConnectionError, Timeout
 import asyncio
@@ -20,15 +20,21 @@ class RouletteBot:
         self.operacoes = []
         self.quantidade_greens = 0
         self.quantidade_reds = 0
-        self.horarios_envio = [9, 12, 18]
+        self.horarios_envio = [12, 15, 0]
         self.contagem_sinais_enviados = 0
         self.martingale_steps = 2
         self.check_dados = []  # Inicializando check_dados
         self.ultimo_horario_envio = None  # Adiciona esta linha
         print("💰 BOT ROLETA BRASILEIRA - LIGADA! 💰")
+    
+    def horario_ajustado(self):
+        return (datetime.now() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
 
     def obter_resultado(self, retries=5, backoff_factor=1.0):
-        headers = {"cookie": "vid=1add2388-481c-49f1-b8ab-2bed487ed73c"}
+        headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+        "cookie": "vid=1add2388-481c-49f1-b8ab-2bed487ed73c"
+        }
         for attempt in range(retries):
             try:
                 response = requests.get(self.api_url, headers=headers)
@@ -75,7 +81,7 @@ class RouletteBot:
         return caracteristicas
 
     def verificar_alerta(self, data):
-        horario_atual = datetime.now().strftime("%H:%M")  # Obtém o horário atual
+        horario_atual = self.horario_ajustado()  # Alterado para usar o horário ajustado
 
         data = self.caracteristicas(data)
         numeros = [numero["numero"] for numero in data]
@@ -160,21 +166,21 @@ class RouletteBot:
             self.reset()
 
     def green(self):
-        horario = datetime.now().strftime("%H:%M:%S")
+        horario = self.horario_ajustado() 
         self.operacoes.append((horario, "GREEN"))
         self.quantidade_greens += 1
         texto = f"✅<b>GREEN! {self.todas_entradas}</b>"
         self.bot.send_message(self.chat_id, text=texto, parse_mode="html")
 
     def red(self):
-        horario = datetime.now().strftime("%H:%M:%S")
+        horario = self.horario_ajustado() 
         self.operacoes.append((horario, "RED"))
         self.quantidade_reds += 1
         texto = f"<b>❌ Loss...</b>"
         self.bot.send_message(self.chat_id, text=texto, parse_mode="html")
 
     def generate_report(self, final_report=False):
-      data_atual = datetime.now().strftime("%d/%m/%y")
+      data_atual = self.horario_ajustado()
       texto_relatorio = f"📊HISTÓRICO DAS ENTRADAS ({data_atual})‍\n"
       for horario, resultado in self.operacoes:
           texto_relatorio += f"{horario} - {'GREEN ✅' if resultado == 'GREEN' else 'RED ❌'}\n"
@@ -228,7 +234,7 @@ class RouletteBot:
                 # Certifique-se de que a última entrada tenha sido processada antes de enviar o relatório final
                 if not self.sinal:
                     self.generate_report(final_report=True)
-                    ultimo_horario_envio = now.date()
+                    ultimo_horario_envio = (datetime.now() - timedelta(hours=3)).date()  # Alterado para usar o horário ajustado
 
             # Reseta os horários para o próximo dia
             if now.hour == 0 and now.minute == 0:

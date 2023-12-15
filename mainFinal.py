@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta
+import sseclient
 
 brasilia_timezone = pytz.timezone("America/Sao_Paulo")
 hora_inicio = (datetime.now() + timedelta(minutes=1)).astimezone(brasilia_timezone).strftime("%H:%M")
@@ -18,7 +19,7 @@ telegram_token = "5666220091:AAGCEWvSx_Y-qfqBl9u8vB-cbMCi_xjjuTw"
 chat_id = "-1001601471922"
 
 # Configurações do jogo
-API_URL = "https://casino.betfair.com/api/tables-details"
+API_URL = "https://gmd.betfair.com/feeds?currency=BRL"
 MARTINGALE_STEPS = 1
 
 # Inicialização do bot
@@ -42,22 +43,16 @@ quatidade_reds = 0
 live_roulette_numbers = []
 check_dados = []
 
-# Função para obter o resultado atual do jogo
-def obter_resultado():
-    headers = {"cookie": "vid=210bec56-62f7-4616-939d-077cf4ff0f25"}
-    response = requests.get(API_URL, headers=headers)
-    if response.status_code != 200:
-        return []
-
-    data = response.json()
-    data = data['gameTables']
-    for x in data:
-        if x['gameTableId'] == '103910':
-            try:
-                data = x['lastNumbers']
-                return data
-            except KeyError:
-                continue
+def obter_dados_roleta():
+    response = requests.get('https://gmd.betfair.com/feeds?currency=BRL', stream=True)
+    client = sseclient.SSEClient(response)
+    for event in client.events():
+        data = json.loads(event.data)
+        message_payload = data.get("messagePayload", {})
+        game_table_name = message_payload.get("liveDealer_payload", {}).get("gameTableName", [])
+        if "roleta-ao-vivo-cev" in game_table_name:
+            last_numbers = message_payload.get("liveDealer_payload", {}).get("result", {}).get("lastNumbers", [])
+            return last_numbers
 
 def monitor_roleta():
     global live_roulette_numbers
@@ -256,29 +251,56 @@ def reset():
     sinal = False
     return
 	
+# def main():
+#     # Inicia a thread de monitoramento uma única vez
+#     # threading.Thread(target=monitor_roleta, daemon=True).start()
+    
+#     while True:
+#         # Use live_roulette_numbers para a lógica do jogo
+#         global check_dados
+#         data = obter_dados_roleta()
+#         print(data)
+#         if data != check_dados:
+#             verificar_alerta(data)
+#             check_dados = data.copy()  # Faz uma cópia dos dados para evitar conflitos
+#             if quantidade_operacoes >= 10:
+#                 generate_report()
+
+#         time.sleep(5)
 def main():
-    # Inicia a thread de monitoramento uma única vez
-    threading.Thread(target=monitor_roleta, daemon=True).start()
-    time.sleep(30)
-    while True:
-        # Use live_roulette_numbers para a lógica do jogo
-        global check_dados
-        data = live_roulette_numbers
-        if data != check_dados:
-            verificar_alerta(data)
-            check_dados = data.copy()  # Faz uma cópia dos dados para evitar conflitos
-            if quantidade_operacoes >= 10:
-                generate_report()
+    # Certifique-se de que a URL é acessível e que você está autorizado a acessá-la.
+    url = 'https://gmd.betfair.com/feeds?currency=BRL'
+    response = requests.get(url, stream=True)
 
-        time.sleep(5)
-# while True:
-#     data = obter_resultado()
+    # O SSEClient é criado com a resposta da requisição, como um iterável
+    client = sseclient.SSEClient(response)
 
-#     if data != check_dados:
-#         verificar_alerta(data)
-#         check_dados = data
-#         if quantidade_operacoes >= 10:
-#             generate_report()
-#     time.sleep(5) 
+    for event in client.events():
+        # Assumindo que os dados do evento são uma string JSON válida
+        try:
+            data = json.loads(event.data)
+        except json.JSONDecodeError:
+            continue  # Pula para o próximo evento se houver um erro de decodificação
+
+        message_payload = data.get("messagePayload", {})
+        game_table_name = message_payload.get("liveDealer_payload", {}).get("gameTableName", [])
+
+        if "roleta-ao-vivo-cev" in game_table_name:
+            last_numbers = message_payload.get("liveDealer_payload", {}).get("result", {}).get("lastNumbers", [])
+            
+            # Você pode querer verificar aqui se last_numbers é diferente de check_dados antes de continuar
+            global check_dados
+            if last_numbers != check_dados:
+                verificar_alerta(last_numbers)
+                check_dados = last_numbers  # Atualiza check_dados
+                global quantidade_operacoes
+                if quantidade_operacoes >= 10:
+                    generate_report()
+                    quantidade_operacoes = 0  # Reset da contagem após gerar o relatório
+
+        # Não é recomendável usar sleep dentro de um loop de eventos de stream,
+        # isso pode causar a perda de eventos ou atrasos na sua aplicação.
+        # time.sleep(5)
+
 if __name__ == "__main__":
     main()
