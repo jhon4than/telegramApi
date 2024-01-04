@@ -20,7 +20,7 @@ class RouletteBot:
         self.operacoes = []
         self.quantidade_greens = 0
         self.quantidade_reds = 0
-        self.horarios_envio = [12, 15, 0]
+        self.horarios_envio = [10, 12, 1]
         self.contagem_sinais_enviados = 0
         self.martingale_steps = 2
         self.check_dados = []  # Inicializando check_dados
@@ -31,30 +31,40 @@ class RouletteBot:
         return (datetime.now() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
 
     def obter_resultado(self, retries=5, backoff_factor=1.0):
-        headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-        "cookie": "vid=1add2388-481c-49f1-b8ab-2bed487ed73c"
-        }
-        for attempt in range(retries):
-            try:
-                response = requests.get(self.api_url, headers=headers)
-                response.raise_for_status()
-                data = response.json()
-                data = data["gameTables"]
-                for x in data:
-                    if x["gameTableId"] == "103910":
-                        try:
-                            return x["lastNumbers"]
-                        except KeyError:
-                            continue
-                return []
-            except (ConnectionError, Timeout) as e:
-                print(f"Falha na conexão ({e}), tentativa {attempt + 1} de {retries}.")
-                sleep(attempt * backoff_factor)
-            except Exception as e:
-                print(f"Erro inesperado: {e}")
-                break
-        return []
+        # Lista de User-Agents para testar
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+            # Adicione mais User-Agents conforme necessário
+        ]
+
+        for user_agent in user_agents:
+            headers = {
+                "User-Agent": user_agent,
+                "cookie": "vid=1add2388-481c-49f1-b8ab-2bed487ed73c"  # Mantenha outros headers necessários
+            }
+
+            for attempt in range(retries):
+                try:
+                    response = requests.get(self.api_url, headers=headers)
+                    response.raise_for_status()
+                    data = response.json()
+                    data = data["gameTables"]
+                    for x in data:
+                        if x["gameTableId"] == "103910":
+                            try:
+                                return x["lastNumbers"]
+                            except KeyError:
+                                continue
+                    return []
+                except (ConnectionError, Timeout) as e:
+                    print(f"Falha na conexão ({e}), tentativa {attempt + 1} de {retries}.")
+                    sleep(attempt * backoff_factor)
+                except Exception as e:
+                    print(f"Erro inesperado com User-Agent {user_agent}: {e}")
+
+        return []  # Retorna uma lista vazia se todas as tentativas falharem
 
     def caracteristicas(self, data):
         if data is None:
@@ -247,6 +257,6 @@ if __name__ == "__main__":
     telegram_token = "5666220091:AAGCEWvSx_Y-qfqBl9u8vB-cbMCi_xjjuTw"
     #chat_id = "-1001951559983"
     chat_id = "-1001601471922"
-    api_url = "https://casino.betfair.com/api/tables-details"
+    api_url = "https://api.scrapingcasinos.com/Evolution/Rodadas/PorROU0000000001.txt"
     bot = RouletteBot(telegram_token, chat_id, api_url)
     asyncio.run(bot.main())
