@@ -22,7 +22,7 @@ class RouletteBot:
         self.operacoes = []
         self.quantidade_greens = 0
         self.quantidade_reds = 0
-        self.horarios_envio = [9, 12, 18]
+        self.horarios_envio = [9, 12, 21]
         self.contagem_sinais_enviados = 0
         self.martingale_steps = 2
         self.check_dados = []  # Inicializando check_dados
