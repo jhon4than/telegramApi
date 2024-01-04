@@ -22,7 +22,7 @@ class RouletteBot:
         self.operacoes = []
         self.quantidade_greens = 0
         self.quantidade_reds = 0
-        self.horarios_envio = [9, 12, 18]
+        self.horarios_envio = [9, 12, 19]
         self.contagem_sinais_enviados = 0
         self.martingale_steps = 2
         self.check_dados = []  # Inicializando check_dados
@@ -33,7 +33,7 @@ class RouletteBot:
         print("💰 BOT ROLETA BRASILEIRA - LIGADA! 💰")
     
     def horario_ajustado(self):
-        return datetime.now().strftime('%d-%m-%Y %H:%M')
+        return (datetime.now() - timedelta(hours=3)).strftime('%d-%m-%Y %H:%M')
 
     def load_report(self):
         try:
@@ -296,7 +296,7 @@ class RouletteBot:
         ultimo_horario_envio = None
 
         while True:
-            now = datetime.now()
+            now = datetime.now() - timedelta(hours=3)
             hora_atual = now.hour
 
             # Processa os sinais para cada horário programado
@@ -324,10 +324,10 @@ class RouletteBot:
             if hora_atual > max(self.horarios_envio) and (ultimo_horario_envio is None or ultimo_horario_envio != now.date()):
                 # Certifique-se de que a última entrada tenha sido processada antes de enviar o relatório final
                 if not self.sinal:
-                    ultimo_horario_envio = (datetime.now() - timedelta(hours=0)).date()  # Alterado para usar o horário ajustado
+                    ultimo_horario_envio = (datetime.now() - timedelta(hours=3)).date()  # Alterado para usar o horário ajustado
 
             # Reseta os horários para o próximo dia
-            if now.hour == 0 and now.minute == 0:
+            if (now - timedelta(hours=3)).hour == 0 and (now - timedelta(hours=3)).minute == 0:
                 horarios_enviados = {horario: False for horario in self.horarios_envio}
 
             await asyncio.sleep(5)
