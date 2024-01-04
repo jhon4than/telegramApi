@@ -324,7 +324,7 @@ class RouletteBot:
                             horarios_enviados[horario] = True
 
             # Gera relatório final se necessário
-            if hora_atual >= 20 and (ultimo_horario_envio is None or ultimo_horario_envio != now.date()):
+            if hora_atual >= 21 and (ultimo_horario_envio is None or ultimo_horario_envio != now.date()):
                 if not self.sinal:
                     self.reset_daily_report()
                     ultimo_horario_envio = now.date()
@@ -338,8 +338,8 @@ class RouletteBot:
 # Inicialização e loop principal do bot
 if __name__ == "__main__":
     telegram_token = "5666220091:AAGCEWvSx_Y-qfqBl9u8vB-cbMCi_xjjuTw"
-    #chat_id = "-1001951559983"
-    chat_id = "-1001601471922"
+    chat_id = "-1001951559983"
+    #chat_id = "-1001601471922"
     api_url = "https://casino.betfair.com/api/tables-details"
     bot = RouletteBot(telegram_token, chat_id, api_url)
     asyncio.run(bot.main())
