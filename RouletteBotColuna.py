@@ -214,7 +214,7 @@ class RouletteBot:
                 print(f"Erro inesperado: {e}")
                 break
         print(f"Esperando tempo de 5 minutos para começar enviar sinais!")
-        sleep(360)
+        # sleep(360)
         texto_mensagem = '''🚨 ATENÇÃO - Iniciando os sinais!
 <a href="https://www.segurobet.com/slots/320/26560?accounts=*&register=*&btag=1504084_l254743&AFFAGG=&mode=fun&provider=all">💸 Clique aqui para se cadastrar e lucrar</a>'''
         max_retries = 3  # Número máximo de tentativas
