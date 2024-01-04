@@ -22,7 +22,7 @@ class RouletteBot:
         self.operacoes = []
         self.quantidade_greens = 0
         self.quantidade_reds = 0
-        self.horarios_envio = [9, 12, 19]
+        self.horarios_envio = [9, 12, 18]
         self.contagem_sinais_enviados = 0
         self.martingale_steps = 2
         self.check_dados = []  # Inicializando check_dados
@@ -261,7 +261,7 @@ class RouletteBot:
     def data_atual(self):
         return datetime.now().strftime('%d/%m/%Y')
 
-    def generate_report(self, final_report=False):
+    def generate_report(self):
         data_atual = self.data_atual()
         texto_relatorio = f"📊HISTÓRICO DAS ENTRADAS - {data_atual}\n\n"
 
@@ -281,14 +281,17 @@ class RouletteBot:
         self.save_report()
         print("Esperando Próximo horário...")
 
-        if final_report:
-            self.clear_report_file()
-            print("Relatório final do dia gerado e resetado.")
-
     def reset(self):
         self.entrada = 0
         self.todas_entradas.clear()
         self.sinal = False
+    
+    def reset_daily_report(self):
+        self.clear_report_file()
+        self.operacoes = []  # Reset operações
+        self.quantidade_greens = 0  # Reset quantidade de greens
+        self.quantidade_reds = 0  # Reset quantidade de reds
+        print("Relatório diário resetado.")
 
     async def main(self):
         horarios_enviados = {horario: False for horario in self.horarios_envio}
@@ -321,9 +324,9 @@ class RouletteBot:
                             horarios_enviados[horario] = True
 
             # Gera relatório final se necessário
-            if hora_atual > max(self.horarios_envio) and (ultimo_horario_envio is None or ultimo_horario_envio != now.date()):
+            if hora_atual >= 20 and (ultimo_horario_envio is None or ultimo_horario_envio != now.date()):
                 if not self.sinal:
-                    self.generate_report(final_report=True)
+                    self.reset_daily_report()
                     ultimo_horario_envio = now.date()
 
             # Reseta os horários para o próximo dia
