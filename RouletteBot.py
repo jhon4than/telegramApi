@@ -283,7 +283,7 @@ class RouletteBot:
 
         if final_report:
             self.clear_report_file()
-            print("Relatório final do dia gerado e salvo.")
+            print("Relatório final do dia gerado e resetado.")
 
     def reset(self):
         self.entrada = 0
@@ -322,9 +322,9 @@ class RouletteBot:
 
             # Gera relatório final se necessário
             if hora_atual > max(self.horarios_envio) and (ultimo_horario_envio is None or ultimo_horario_envio != now.date()):
-                # Certifique-se de que a última entrada tenha sido processada antes de enviar o relatório final
                 if not self.sinal:
-                    ultimo_horario_envio = (datetime.now() - timedelta(hours=3)).date()  # Alterado para usar o horário ajustado
+                    self.generate_report(final_report=True)
+                    ultimo_horario_envio = now.date()
 
             # Reseta os horários para o próximo dia
             if (now - timedelta(hours=3)).hour == 0 and (now - timedelta(hours=3)).minute == 0:
