@@ -249,6 +249,7 @@ class RouletteBot:
         texto = f"✅<b>GREEN! {self.todas_entradas}</b>"
         self.bot.send_message(self.chat_id, text=texto, parse_mode="html")
         print(f"Entrada GREEN no horário {horario}. Total de GREENs: {self.quantidade_greens} Numero :{self.todas_entradas}")
+        sleep(40)
 
     def red(self):
         horario = self.horario_ajustado() 
@@ -257,6 +258,7 @@ class RouletteBot:
         texto = f"<b>❌ Loss...</b>"
         self.bot.send_message(self.chat_id, text=texto, parse_mode="html")
         print(f"Entrada RED no horário {horario}. Total de REDs: {self.quantidade_reds} Numero :{self.todas_entradas}")
+        sleep(40)
 
     def data_atual(self):
         return datetime.now().strftime('%d/%m/%Y')
